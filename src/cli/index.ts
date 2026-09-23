@@ -11,7 +11,7 @@ import { createStaleCommand } from './commands/stale.js';
 
 const program = new Command();
 program
-    .name('scat')
+    .name('xcstrings')
     .description('String Catalog CLI — manage Xcode .xcstrings files')
     .version('1.0.0');
 

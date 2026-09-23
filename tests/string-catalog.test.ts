@@ -9,7 +9,7 @@ const FIXTURE_PATH = path.join(import.meta.dir, 'fixtures/sample.xcstrings');
 let tmpFile: string;
 
 beforeEach(() => {
-    tmpFile = path.join(os.tmpdir(), `scat-test-${Date.now()}.xcstrings`);
+    tmpFile = path.join(os.tmpdir(), `xcstrings-test-${Date.now()}.xcstrings`);
     fs.copyFileSync(FIXTURE_PATH, tmpFile);
 });
 

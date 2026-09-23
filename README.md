@@ -4,84 +4,96 @@ CLI for managing Xcode String Catalog (`.xcstrings`) files. Query, inspect, and 
 
 ## Install
 
+Install locally from source — this links the `xcstrings` command globally:
+
+```sh
+git clone https://github.com/onmyway133/string-catalog-cli.git
+cd string-catalog-cli
+bun install
+bun run build
+bun link
+```
+
+After pulling changes, re-run `bun run build` to update the linked command.
+
+Or install from npm:
+
 ```sh
 npm install -g string-catalog-cli
-# or
-bun add -g string-catalog-cli
 ```
 
 ## Commands
 
 All commands take a path to an `.xcstrings` file as the first argument. Add `--json` to any command for machine-readable output.
 
-### `scat languages <file>`
+### `xcstrings languages <file>`
 
 List all languages with translation coverage.
 
 ```sh
-scat languages App.xcstrings
+xcstrings languages App.xcstrings
 ```
 
-### `scat stats <file>`
+### `xcstrings stats <file>`
 
 Detailed statistics broken down by state (translated, needs_review, new, stale).
 
 ```sh
-scat stats App.xcstrings
-scat stats App.xcstrings --json
+xcstrings stats App.xcstrings
+xcstrings stats App.xcstrings --json
 ```
 
-### `scat keys <file>`
+### `xcstrings keys <file>`
 
 List all string keys. Supports pagination.
 
 ```sh
-scat keys App.xcstrings
-scat keys App.xcstrings --limit 50 --offset 0
+xcstrings keys App.xcstrings
+xcstrings keys App.xcstrings --limit 50 --offset 0
 ```
 
-### `scat search <file> <query>`
+### `xcstrings search <file> <query>`
 
 Case-insensitive substring search over key names.
 
 ```sh
-scat search App.xcstrings "button"
+xcstrings search App.xcstrings "button"
 ```
 
-### `scat get <file> <key>`
+### `xcstrings get <file> <key>`
 
 Show all translations for a specific key with their states.
 
 ```sh
-scat get App.xcstrings "Cancel"
-scat get App.xcstrings "Cancel" --json
+xcstrings get App.xcstrings "Cancel"
+xcstrings get App.xcstrings "Cancel" --json
 ```
 
-### `scat missing <file>`
+### `xcstrings missing <file>`
 
 List keys with missing translations, optionally filtered to one language.
 
 ```sh
-scat missing App.xcstrings
-scat missing App.xcstrings --language de
-scat missing App.xcstrings --language de --json
+xcstrings missing App.xcstrings
+xcstrings missing App.xcstrings --language de
+xcstrings missing App.xcstrings --language de --json
 ```
 
-### `scat stale <file>`
+### `xcstrings stale <file>`
 
 List keys marked stale by Xcode's extraction state or by translation state.
 
 ```sh
-scat stale App.xcstrings
+xcstrings stale App.xcstrings
 ```
 
-### `scat update <file> <json-or-path>`
+### `xcstrings update <file> <json-or-path>`
 
 Update translations from an inline JSON string or a path to a JSON file.
 
 ```sh
-scat update App.xcstrings translations.json
-scat update App.xcstrings '{"data":[{"key":"Cancel","translations":[{"language":"de","value":"Abbrechen"}]}]}'
+xcstrings update App.xcstrings translations.json
+xcstrings update App.xcstrings '{"data":[{"key":"Cancel","translations":[{"language":"de","value":"Abbrechen"}]}]}'
 ```
 
 **JSON format:**

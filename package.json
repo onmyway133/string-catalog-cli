@@ -4,7 +4,7 @@
   "type": "module",
   "description": "CLI for managing Xcode String Catalog (.xcstrings) files",
   "bin": {
-    "scat": "dist/cli/index.js"
+    "xcstrings": "dist/cli/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
