@@ -21,7 +21,7 @@ export function createStatsCommand(): Command {
             console.log(`Total keys:       ${stats.totalKeys}`);
             console.log(`Translatable:     ${stats.translatableKeys}`);
             if (stats.skippedKeys > 0) {
-                console.log(`Skipped:          ${stats.skippedKeys} (shouldTranslate: false)`);
+                console.log(`Skipped:          ${stats.skippedKeys} (shouldTranslate: false or empty key)`);
             }
             console.log('');
 

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import chalk from 'chalk';
 
 export function printTable(headers: string[], rows: string[][]): void {
@@ -20,8 +21,23 @@ export function printTable(headers: string[], rows: string[][]): void {
     }
 }
 
+// Compact on purpose: --json output is mostly read by tools and AI agents, where
+// pretty-printing only inflates the token count.
 export function printJson(data: unknown): void {
-    console.log(JSON.stringify(data, null, 2));
+    console.log(JSON.stringify(data));
+}
+
+export function readStdin(): string {
+    return fs.readFileSync(0, 'utf-8');
+}
+
+export function parseIntOption(value: string, name: string): number {
+    const n = parseInt(value, 10);
+    if (Number.isNaN(n) || n < 0) {
+        printError(`${name} must be a non-negative integer`);
+        process.exit(1);
+    }
+    return n;
 }
 
 export function printError(msg: string): void {

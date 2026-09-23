@@ -13,7 +13,7 @@ export function createLanguagesCommand(): Command {
 
             if (options.json) {
                 printJson({
-                    sourceLanguage: stats.languages[0],
+                    sourceLanguage: catalog.getSourceLanguage(),
                     languages: stats.translationCoverage,
                 });
                 return;

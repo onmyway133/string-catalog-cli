@@ -37,24 +37,32 @@ export function createGetCommand(): Command {
                 return;
             }
 
-            console.log(`Key: ${chalk.bold(result.key)}\n`);
+            console.log(`Key:    ${chalk.bold(result.key)}`);
+            if (result.sourceText !== result.key) console.log(`Source: ${result.sourceText}`);
+            if (result.comment) console.log(`Comment: ${result.comment}`);
+            if (result.shouldTranslate === false) console.log('shouldTranslate: false');
+            if (result.extractionState === 'stale') console.log('extractionState: stale (no longer in code)');
+            console.log('');
 
-            const headers = ['Language', 'Value', 'State'];
-            const rows = result.translations.map((t) => [t.language, t.value, t.state]);
-
-            const colWidths = headers.map((h, i) =>
-                Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)),
+            const rows = result.translations.flatMap((t) =>
+                t.pluralForms
+                    ? Object.entries(t.pluralForms).map(([form, value]) => ({
+                          language: `${t.language} (${form})`,
+                          value: value ?? '',
+                          state: t.state,
+                      }))
+                    : [t],
             );
-            const separator = colWidths.map((w) => '─'.repeat(w)).join('  ');
+            const headers = ['Language', 'Value', 'State'];
+            const widths = [
+                Math.max(headers[0].length, ...rows.map((r) => r.language.length)),
+                Math.max(headers[1].length, ...rows.map((r) => r.value.length)),
+            ];
 
-            console.log(chalk.bold(headers.map((h, i) => h.padEnd(colWidths[i])).join('  ')));
-            console.log(separator);
-
-            for (const row of result.translations) {
-                const lang = row.language.padEnd(colWidths[0]);
-                const val = row.value.padEnd(colWidths[1]);
-                const state = colorState(row.state);
-                console.log(`${lang}  ${val}  ${state}`);
+            console.log(chalk.bold(`${headers[0].padEnd(widths[0])}  ${headers[1].padEnd(widths[1])}  ${headers[2]}`));
+            console.log(`${'─'.repeat(widths[0])}  ${'─'.repeat(widths[1])}  ${'─'.repeat(12)}`);
+            for (const row of rows) {
+                console.log(`${row.language.padEnd(widths[0])}  ${row.value.padEnd(widths[1])}  ${colorState(row.state)}`);
             }
         });
 }

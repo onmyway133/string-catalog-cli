@@ -24,79 +24,101 @@ npm install -g string-catalog-cli
 
 ## Commands
 
-All commands take a path to an `.xcstrings` file as the first argument. Add `--json` to any command for machine-readable output.
+All commands take a path to an `.xcstrings` file as the first argument. Add `--json` to any read command for compact, machine-readable output (single line, no pretty-printing, so it stays cheap for AI agents to read).
+
+Writes preserve the file's existing formatting (Xcode's `"key" : value` style, key order, trailing newline), so `git diff` only shows what actually changed.
+
+In Xcode catalogs the key is usually the source text and the source-language entry is often omitted. The CLI treats such keys as having the key itself as source text, so they don't show up as "missing" in the source language.
 
 ### `xcstrings languages <file>`
 
 List all languages with translation coverage.
 
-```sh
-xcstrings languages App.xcstrings
-```
-
 ### `xcstrings stats <file>`
 
 Detailed statistics broken down by state (translated, needs_review, new, stale).
 
-```sh
-xcstrings stats App.xcstrings
-xcstrings stats App.xcstrings --json
-```
-
 ### `xcstrings keys <file>`
 
-List all string keys. Supports pagination.
-
-```sh
-xcstrings keys App.xcstrings
-xcstrings keys App.xcstrings --limit 50 --offset 0
-```
+List all string keys. Paginated with `--limit` (default 100) and `--offset`.
 
 ### `xcstrings search <file> <query>`
 
 Case-insensitive substring search over key names.
 
-```sh
-xcstrings search App.xcstrings "button"
-```
-
 ### `xcstrings get <file> <key>`
 
-Show all translations for a specific key with their states.
+Show source text, comment, and all translations (including every plural form) for one key. Use `--` before keys starting with `-`, with all options before it: `xcstrings get App.xcstrings --json -- "-foo"`.
+
+### `xcstrings source <file> [keys...]`
+
+Source text and comment for many keys in one call. Use `--stdin` to pass a JSON array or one key per line.
 
 ```sh
-xcstrings get App.xcstrings "Cancel"
-xcstrings get App.xcstrings "Cancel" --json
+xcstrings source App.xcstrings "Cancel" "Delete %@?" --json
+jq -c '[.items[].key]' page.json | xcstrings source App.xcstrings --stdin --json
+```
+
+### `xcstrings values <file> --language <lang>`
+
+Every key with its source text and value in one language, for reviewing translation quality. Add `--compare <lang>` to show a second language next to it. Skips stale keys unless `--include-stale`. Paginated with `--limit` (default 100) and `--offset`.
+
+```sh
+xcstrings values App.xcstrings --language pl --compare de --limit 50 --json
 ```
 
 ### `xcstrings missing <file>`
 
-List keys with missing translations, optionally filtered to one language.
+List keys with missing translations. Skips `shouldTranslate: false` keys and keys Xcode marked stale (no longer in code, use `--include-stale` to include them). Paginated with `--limit` (default 100) and `--offset`.
 
 ```sh
-xcstrings missing App.xcstrings
-xcstrings missing App.xcstrings --language de
-xcstrings missing App.xcstrings --language de --json
+xcstrings missing App.xcstrings --language de --with-source --limit 50 --json
+# {"total":71,"offset":0,"limit":50,"hasMore":true,"items":[{"key":"Delete %@?","source":"Delete %@?","comment":"Confirm deletion"}, ...]}
 ```
+
+`--with-source` includes the source text and comment, which is everything needed to translate a batch in one call.
 
 ### `xcstrings stale <file>`
 
 List keys marked stale by Xcode's extraction state or by translation state.
 
+### `xcstrings check <file>`
+
+Find translations that break at runtime. Each issue has a `kind`:
+
+| kind | Meaning |
+|---|---|
+| `extra-placeholder` | Translation reads an argument the source doesn't have (garbage or crash) |
+| `wrong-placeholder-type` | e.g. `%d` where the source has `%lld` |
+| `malformed-placeholder` | Stray `%`, e.g. `@%` typed instead of `%@` |
+| `missing-placeholder` | Translation drops a placeholder |
+| `raw-key` | An ID-style key (`settings.title`, `onProPlan`) shows up as the value, or has no source text at all |
+| `empty` | Empty value |
+
+Positional and sequential specifiers are treated as equivalent (`%@ %lld` matches `%2$lld %1$@`), and plural `one`/`zero` forms may drop the count. Stale keys are skipped unless `--include-stale`. Filter with `--language` and `--kind`. Exits with code 1 when issues are found.
+
 ```sh
-xcstrings stale App.xcstrings
+xcstrings check App.xcstrings --json --limit 0          # just the counts per kind
+xcstrings check App.xcstrings --language de --kind raw-key,empty
 ```
 
 ### `xcstrings update <file> <json-or-path>`
 
-Update translations from an inline JSON string or a path to a JSON file.
+Update translations from inline JSON, a JSON file, or `-` for stdin.
 
 ```sh
 xcstrings update App.xcstrings translations.json
+xcstrings update App.xcstrings - < translations.json
 xcstrings update App.xcstrings '{"data":[{"key":"Cancel","translations":[{"language":"de","value":"Abbrechen"}]}]}'
 ```
 
-**JSON format:**
+- Unknown keys are skipped (a typo would otherwise create a junk key). Pass `--create` to add new keys.
+- Every written translation is checked against the source placeholders and mismatches are reported. `--strict` refuses to save if any are found.
+- Localizations using device variations or substitutions are protected: `update` refuses to overwrite them (it would destroy them) and reports them.
+- `--dry-run` reports what would change without saving.
+- Exits with code 1 if keys were skipped or protected, or `--strict` blocked the save.
+
+**JSON format** (a bare array without the `data` wrapper also works):
 
 ```json
 {
@@ -105,7 +127,7 @@ xcstrings update App.xcstrings '{"data":[{"key":"Cancel","translations":[{"langu
       "key": "Hello %@",
       "translations": [
         { "language": "de", "value": "Hallo %@" },
-        { "language": "fr", "value": "Bonjour %@" }
+        { "language": "fr", "value": "Bonjour %@", "state": "needs_review" }
       ],
       "comment": "Greeting with user name"
     }
@@ -113,7 +135,7 @@ xcstrings update App.xcstrings '{"data":[{"key":"Cancel","translations":[{"langu
 }
 ```
 
-For plural strings, use `pluralForms` instead of `value`:
+`state` defaults to `translated`. For plural strings, use `pluralForms` instead of `value`:
 
 ```json
 {
@@ -161,4 +183,4 @@ bun test
 
 ## Related
 
-- [string-catalog-mcp](https://github.com/onmyway133/string-catalog-mcp) — MCP server that wraps this library for use with Claude and other AI tools
+- [super-use-xcstrings](https://github.com/onmyway133/private-skills/tree/main/skills/super-use-xcstrings) — Claude Code skill that teaches agents to use this CLI

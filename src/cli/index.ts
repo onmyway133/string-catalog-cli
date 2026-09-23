@@ -8,12 +8,15 @@ import { createGetCommand } from './commands/get.js';
 import { createUpdateCommand } from './commands/update.js';
 import { createMissingCommand } from './commands/missing.js';
 import { createStaleCommand } from './commands/stale.js';
+import { createSourceCommand } from './commands/source.js';
+import { createCheckCommand } from './commands/check.js';
+import { createValuesCommand } from './commands/values.js';
 
 const program = new Command();
 program
     .name('xcstrings')
     .description('String Catalog CLI — manage Xcode .xcstrings files')
-    .version('1.0.0');
+    .version('1.1.0');
 
 program.addCommand(createLanguagesCommand());
 program.addCommand(createStatsCommand());
@@ -23,5 +26,8 @@ program.addCommand(createGetCommand());
 program.addCommand(createUpdateCommand());
 program.addCommand(createMissingCommand());
 program.addCommand(createStaleCommand());
+program.addCommand(createSourceCommand());
+program.addCommand(createCheckCommand());
+program.addCommand(createValuesCommand());
 
 program.parse();
